@@ -25,7 +25,7 @@ import Lumi.Components.Color (colors)
 import Lumi.Components.Icon (IconType(ArrowUp, ArrowDown), icon_)
 import Lumi.Components.Input (CheckboxState(..), checkbox, input)
 import Lumi.Components.Link as Link
-import Lumi.Components.Table.FilterDropdown (Item, filterDropdown)
+import Lumi.Components.Table.FilterDropdown (filterDropdown)
 import Lumi.Components.Text (subtext_)
 import Lumi.Components.ZIndex (ziTableHeader, ziTableHeaderMenu, ziTableLockedColumn, ziTableLockedColumnHeader)
 import React.Basic (Component, JSX, ReactComponent, createComponent, element, empty, keyed, make, readProps, readState)
@@ -61,6 +61,7 @@ type TableProps row =
   , sort :: Nullable SortString
   , sortBy :: Nullable ColumnName
   , updateSort :: EffectFn2 SortString (Nullable ColumnName) Unit
+  , onColumnChange :: Nullable (EffectFn1 (Array ColumnName) Unit)
   , selectable :: Boolean
   , selected :: Nullable (Array String)
   , onSelect :: EffectFn1 (Array String) Unit
@@ -97,14 +98,6 @@ type TableProps row =
 component :: forall row. Component (TableProps row)
 component = createComponent "Table"
 
-data Action
-  = SyncProps (Maybe (Array { name :: ColumnName, hidden :: Boolean }))
-  | OpenMenu { top :: String, left :: String }
-  | CloseMenu
-  | SetColumnSort (Array Item)
-  | OnSelect { shift :: Boolean, key :: String, checked :: Boolean }
-  | OnSelectAll Boolean
-
 table :: forall a. TableProps a -> JSX
 table = make component
   { initialState
@@ -124,7 +117,9 @@ table = make component
       }
 
     didMount self = do
-      maybeSavedColumnSort <- loadColumnState $ columnSaveKey self.props.name
+      maybeSavedColumnSort <- case toMaybe self.props.onColumnChange of
+        Nothing -> loadColumnState $ columnSaveKey self.props.name
+        Just _ -> pure Nothing
       syncProps self maybeSavedColumnSort
 
     didUpdate self _ = do
@@ -169,9 +164,18 @@ table = make component
         do
           props <- readProps self
           state <- readState self
-          saveColumnState
-            (columnSaveKey props.name)
-            (getColumnSortFields <$> state.columns)
+          let columns = state.columns # Array.filter (not _.hidden)
+          case toMaybe props.onColumnChange of
+            Nothing ->
+              saveColumnState
+                (columnSaveKey props.name)
+                (getColumnSortFields <$> state.columns)
+            Just occ -> do
+              runEffectFn1 occ $ map _.name columns
+              self.setStateThen
+                (_ { columns = [] })
+                (syncProps self Nothing)
+
 
     onSelect self { shift, key, checked } = do
       self.setStateThen (\state ->

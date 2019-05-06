@@ -6,7 +6,7 @@ import Data.Array (index)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (un)
 import Data.NonEmpty ((:|))
-import Data.Nullable (toNullable)
+import Data.Nullable as Nullable
 import Data.String (Pattern(..), split)
 import Effect.Console (log)
 import Effect.Uncurried (mkEffectFn1, mkEffectFn2, runEffectFn1)
@@ -221,24 +221,25 @@ docs = (\c -> element c {}) $ withRouter $ toReactComponent identity component {
       table
         { name: "Items"
         , sortable: true
-        , sort: toNullable Nothing
-        , sortBy: toNullable Nothing
+        , sort: Nullable.null
+        , sortBy: Nullable.null
         , updateSort: mkEffectFn2 \sort sortBy -> do
             log "update sort click"
         , selectable: true
-        , selected: toNullable Nothing
+        , selected: Nullable.null
         , onSelect: mkEffectFn1 (log <<< show)
         , rows: overviewTableData
         , getRowKey: _.id
         , rowEq: eq
+        , onColumnChange: Nullable.null
         , onNavigate: mkEffectFn1 \href ->
             log $ "Should navigate to: " <> un URL href
-        , variant: toNullable Nothing
-        , primaryColumn: toNullable $ Just
+        , variant: Nullable.null
+        , primaryColumn: Nullable.notNull
             { name: ColumnName "product"
-            , label: toNullable $ Just "Product title"
-            , filterLabel: toNullable $ Just "Product title"
-            , sortBy: toNullable Nothing
+            , label: Nullable.notNull "Product title"
+            , filterLabel: Nullable.notNull "Product title"
+            , sortBy: Nullable.null
             , style: R.css {}
             , getLink: _.link
             , sticky: false
@@ -252,9 +253,9 @@ docs = (\c -> element c {}) $ withRouter $ toReactComponent identity component {
         , columns:
             [ { required: true
               , name: ColumnName "product-type"
-              , label: toNullable $ Just "Product type"
-              , filterLabel: toNullable Nothing
-              , sortBy: toNullable $ Just $ ColumnName "title"
+              , label: Nullable.notNull "Product type"
+              , filterLabel: Nullable.null
+              , sortBy: Nullable.notNull $ ColumnName "title"
               , style: R.css {}
               , hidden: false
               , sticky: false
@@ -266,9 +267,9 @@ docs = (\c -> element c {}) $ withRouter $ toReactComponent identity component {
               }
             , { required: true
               , name: ColumnName "created-date"
-              , label: toNullable $ Just "Created date"
-              , filterLabel: toNullable Nothing
-              , sortBy: toNullable $ Just $ ColumnName "createdDate"
+              , label: Nullable.notNull "Created date"
+              , filterLabel: Nullable.null
+              , sortBy: Nullable.notNull $ ColumnName "createdDate"
               , style: R.css {}
               , hidden: false
               , sticky: false

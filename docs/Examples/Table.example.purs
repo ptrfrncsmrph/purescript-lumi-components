@@ -55,6 +55,7 @@ docs = unit # make component { initialState, render }
                       , selectable: true
                       , selected: null -- notNull self.state.selected -- use this to test parent-controlled selection
                       , onSelect: mkEffectFn1 mempty -- \selected -> self.setState _ { selected = selected }
+                      , onColumnChange: null
                       , rows: (if self.state.sort == SortString "desc" then Array.reverse else identity)
                           let tableFieldSort = comparing \row -> do
                                 ColumnName sortByCol <- self.state.sortBy
@@ -127,6 +128,7 @@ docs = unit # make component { initialState, render }
                       , selectable: true
                       , selected: notNull self.state.selected -- use this to test parent-controlled selection
                       , onSelect: mkEffectFn1 \selected -> self.setState _ { selected = selected }
+                      , onColumnChange: null
                       , rows: (if self.state.sort == SortString "desc" then Array.reverse else identity)
                           let tableFieldSort = comparing \row -> do
                                 ColumnName sortByCol <- self.state.sortBy
